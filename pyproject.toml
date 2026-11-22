@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 pretrain = "minimind.trainer.train_pretrain:main"
+chat = "minimind.inference.chat:main"
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]

@@ -20,6 +20,9 @@ from minimind.model.model_minimind import MiniMindForCausalLM
 
 # 默认资源目录以源码位置为基准，使 uv 命令和 python -m 使用相同的文件位置。
 PACKAGE_DIR = Path(__file__).resolve().parents[1]
+# 源码布局为 <项目根目录>/src/minimind，训练产物统一放在 target 下。
+PROJECT_ROOT = PACKAGE_DIR.parents[1]
+TARGET_DIR = PROJECT_ROOT / 'target'
 
 # ======== 模型参数量 ========
 def get_model_params(model, config):
@@ -119,7 +122,7 @@ def setup_seed(seed: int):
 
 
 # ======== 断点保存与续训 ========
-def lm_checkpoint(lm_config, weight='full_sft', model=None, optimizer=None, epoch=0, step=0, wandb=None, save_dir=PACKAGE_DIR / 'checkpoints', **kwargs):
+def lm_checkpoint(lm_config, weight='full_sft', model=None, optimizer=None, epoch=0, step=0, wandb=None, save_dir=TARGET_DIR / 'checkpoints', **kwargs):
     """保存或读取训练断点；是否传入 model 决定工作模式。
 
     保存时需传入 optimizer：导出半精度模型权重，同时保存包含原精度权重、
@@ -130,7 +133,7 @@ def lm_checkpoint(lm_config, weight='full_sft', model=None, optimizer=None, epoc
     不传 model 时读取续训文件并返回字典，不存在则返回 None；GPU 数变化时
     按 world_size 比例折算 step。这是批次进度换算，不保证与原训练逐步等价。
     当前未保存随机数状态或尚未更新的 .grad，保存点应与梯度累积周期对齐。
-    默认目录为包内 checkpoints；显式传入的相对路径按当前工作目录解析。
+    默认目录为项目根目录下的 target/checkpoints；显式传入的相对路径按当前工作目录解析。
     """
     os.makedirs(save_dir, exist_ok=True)
     moe_path = '_moe' if lm_config.use_moe else ''
@@ -187,13 +190,14 @@ def lm_checkpoint(lm_config, weight='full_sft', model=None, optimizer=None, epoc
 
 
 # ======== 模型初始化 ========
-def init_model(lm_config, from_weight='pretrain', tokenizer_path=PACKAGE_DIR / 'model', save_dir=PACKAGE_DIR / 'out', device='cuda'):
+def init_model(lm_config, from_weight='pretrain', tokenizer_path=PACKAGE_DIR / 'model', save_dir=TARGET_DIR / 'out', device='cuda'):
     """返回放到 device 的模型和配套分词器；可从已有权重初始化。
 
     lm_config 定义模型结构；from_weight='none' 时随机初始化，否则从
     save_dir 加载对应前缀的权重。这里不恢复优化器和训练进度，完整续训由
-    lm_checkpoint 配合训练入口完成。默认目录分别为包内 model、out；显式传入
-    的相对路径按当前工作目录解析。分词器词表及特殊 ID 需与模型配置匹配。
+    lm_checkpoint 配合训练入口完成。默认从包内 model 加载分词器，从项目根目录
+    下的 target/out 加载权重；显式传入的相对路径按当前工作目录解析。
+    分词器词表及特殊 ID 需与模型配置匹配。
     """
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     model = MiniMindForCausalLM(lm_config)

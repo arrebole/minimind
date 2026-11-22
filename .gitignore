@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 src/minimind/method/
+
+# Incomplete training artifacts; completed files under target/ are tracked by Git LFS.
+/target/**/*.tmp
+/target/**/*.part

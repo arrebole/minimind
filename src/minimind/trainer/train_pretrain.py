@@ -18,6 +18,7 @@ from minimind.dataset.lm_dataset import PretrainDataset
 from minimind.model.model_minimind import MiniMindConfig
 from minimind.trainer.trainer_utils import (
     PACKAGE_DIR,
+    TARGET_DIR,
     Logger,
     SkipBatchSampler,
     get_lr,
@@ -106,13 +107,14 @@ def main():
     """解析命令行并初始化训练，供 uv run pretrain 和 python -m 共同调用。
 
     初始化本模块 train_epoch 使用的模型、优化器等全局对象，再按设定轮数训练。
-    默认资源路径基于源码位置；用户显式指定的相对路径基于启动时的工作目录。
+    默认数据和分词器路径基于源码位置，产物保存在项目根目录的 target 下；用户显式
+    指定的相对路径基于启动时的工作目录。
     仅导入模块不会开始训练，--help 会在初始化模型和创建输出目录之前退出。
     """
     global args, lm_config, model, optimizer, scaler, autocast_ctx
 
     parser = argparse.ArgumentParser(description="MiniMind Pretraining")
-    parser.add_argument("--save_dir", type=str, default=str(PACKAGE_DIR / 'out'), help="模型保存目录")
+    parser.add_argument("--save_dir", type=str, default=str(TARGET_DIR / 'out'), help="模型保存目录（默认项目根目录下的 target/out）")
     parser.add_argument('--save_weight', default='pretrain', type=str, help="保存权重的前缀名")
     parser.add_argument("--epochs", type=int, default=2, help="训练轮数")
     parser.add_argument("--batch_size", type=int, default=32, help="batch size")
